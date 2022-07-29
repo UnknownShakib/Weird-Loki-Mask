@@ -32,6 +32,10 @@ private interface HuskyImpl : Dev {
     override val name get() = "HuskyDG"
 }
 
+private interface DngImpl : Dev {
+    override val name get() = "datnerdguy"
+}
+
 sealed class DeveloperItem : Dev {
 
     abstract val items: List<IconLink>
@@ -81,6 +85,13 @@ sealed class DeveloperItem : Dev {
         override val items =
             listOf<IconLink>(
                 object : IconLink.Github.User(), HuskyImpl {}
+            )
+    }
+
+    object Dng : DeveloperItem(), DngImpl {
+        override val items =
+            listOf<IconLink>(
+                object : IconLink.Github.User(), DngImpl {}
             )
     }
 }
