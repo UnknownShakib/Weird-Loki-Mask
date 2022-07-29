@@ -37,8 +37,7 @@ class ModuleViewModel : AsyncLoadViewModel() {
 
     private suspend fun init() = withContext(Dispatchers.IO) {
         if (Info.env.isActive && LocalModule.loaded()) {
-            items.insertItem(InstallModule)
-                .insertList(itemsInstalled)
+            items.insertList(itemsInstalled)
         }
     }
 
