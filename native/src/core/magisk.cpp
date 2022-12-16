@@ -18,10 +18,10 @@ static void install_applet(const char *path){
     string s;
     for (int i = 0; applet_names[i]; ++i){
         s = string(path) + "/" + string(applet_names[i]);
-        xsymlink("./magisk", s.data());
+        symlink("./magisk", s.data());
     }
     s = string(path) + "/supolicy";
-    xsymlink("./magiskpolicy", s.data());
+    symlink("./magiskpolicy", s.data());
 }
 
 [[noreturn]] static void usage() {
@@ -91,6 +91,25 @@ int magisk_main(int argc, char *argv[]) {
     } else if (argv[1] == "--mount-sbin"sv) {
         int ret = mount_sbin();
         return ret;
+    } else if (argc > 2 && argv[1] == "--setup-sbin"sv) {
+        if (mount_sbin()!=0) return -1;
+        // copy all binaries to sbin
+        const char *bins[] = { "magisk32", "magisk64", "magiskpolicy", nullptr };
+        for (int i=0;bins[i];i++){
+       	    string src = string(argv[2]) + "/"s + string(bins[i]);
+       	    string dest = "/sbin/"s + string(bins[i]);
+       	    if (access(src.data(), F_OK)==0){
+       	        cp_afc(src.data(), dest.data());
+       	        chmod(dest.data(), 0755);
+       	    }
+        }
+#ifdef __LP64__
+        symlink("./magisk64", "/sbin/magisk");
+#else
+        symlink("./magisk32", "/sbin/magisk");
+#endif
+        install_applet("/sbin");
+        return 0;
     } else if (argv[1] == "--install"sv) {
         if (argc >= 3)
             install_applet(argv[2]);

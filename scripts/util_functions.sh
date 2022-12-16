@@ -874,19 +874,9 @@ cat <<EOF
 
 on post-fs-data
     start logd
-    exec $suexec_seclabel root root -- $MAGISKSYSTEMDIR/$magisk_name --mount-sbin
-    copy $MAGISKSYSTEMDIR/magisk64 $MAGISKTMP/magisk64
-    chmod 0755 $MAGISKTMP/magisk64
-    symlink ./$magisk_name $MAGISKTMP/magisk
-    exec $suexec_seclabel root root -- $MAGISKSYSTEMDIR/$magisk_name --install
-    copy $MAGISKSYSTEMDIR/magisk32 $MAGISKTMP/magisk32
-    chmod 0755 $MAGISKTMP/magisk32
-    copy $MAGISKSYSTEMDIR/magiskinit $MAGISKTMP/magiskinit
-    chmod 0755 $MAGISKTMP/magiskinit
-    copy $MAGISKSYSTEMDIR/magiskpolicy $MAGISKTMP/magiskpolicy
-    chmod 0755 $MAGISKTMP/magiskpolicy
-    exec $suexec_seclabel root root -- $MAGISKTMP/magiskpolicy --live --magisk "allow * magisk_file lnk_file *"
-    exec $seclabel_exec root root -- $MAGISKTMP/magiskinit -x manager $MAGISKTMP/stub.apk
+    exec $suexec_seclabel root root -- $MAGISKSYSTEMDIR/$magisk_name --setup-sbin $MAGISKSYSTEMDIR
+    exec $suexec_seclabel root root -- $MAGISKSYSTEMDIR/magiskpolicy --live --magisk "allow * magisk_file lnk_file *"
+    exec $seclabel_exec root root -- $MAGISKSYSTEMDIR/magiskinit -x manager $MAGISKTMP/stub.apk
     write /dev/.magisk_livepatch 0
     mkdir $MAGISKTMP/.magisk 700
     mkdir $MAGISKTMP/.magisk/mirror 700
@@ -1085,7 +1075,7 @@ direct_install_system(){
             mkblknode "$MIRRORDIR/block/system_root" /
             mkdir "$ROOTDIR"
             force_mount "$MIRRORDIR/block/system_root" "$ROOTDIR" || return 1
-            mkdir "$MIRRORDIR/block/system_root/sbin"
+            mkdir "$ROOTDIR/sbin"
             ln -fs ./system_root/system "$SYSTEMDIR"
         fi
 
