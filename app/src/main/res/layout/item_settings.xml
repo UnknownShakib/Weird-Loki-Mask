@@ -16,7 +16,7 @@
     </data>
 
     <com.google.android.material.card.MaterialCardView
-        style="@style/WidgetFoundation.Card"
+        style="@style/WidgetFoundation.Card.Shadowless"
         isEnabled="@{item.enabled}"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -53,10 +53,12 @@
                 android:paddingBottom="@dimen/l1">
 
                 <TextView
+                    android:id="@+id/title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="start"
+                    android:textSize="18sp"
                     android:text="@{item.title}"
                     android:textAppearance="@style/AppearanceFoundation.Body"
                     android:textStyle="bold"
@@ -68,13 +70,13 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@{item.description}"
-                    android:textAppearance="@style/AppearanceFoundation.Tiny.Variant"
+                    android:textAppearance="@style/AppearanceFoundation.Caption.Variant"
                     tools:lines="2"
                     tools:text="@tools:sample/lorem/random" />
 
             </LinearLayout>
 
-            <com.google.android.material.switchmaterial.SwitchMaterial
+            <com.google.android.material.materialswitch.MaterialSwitch
                 android:id="@+id/selector_indicator"
                 goneUnless="@{item.showSwitch}"
                 isEnabled="@{item.enabled}"
