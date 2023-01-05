@@ -112,6 +112,7 @@
                 style="@style/WidgetFoundation.Button.Error"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
+                android:elevation="@dimen/btn_highlight"
                 android:layout_marginStart="@dimen/l2"
                 android:layout_marginEnd="@dimen/l2"
                 android:onClick="@{() -> viewModel.onDeletePressed()}"
