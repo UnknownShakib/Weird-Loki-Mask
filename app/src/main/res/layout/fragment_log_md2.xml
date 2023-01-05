@@ -28,8 +28,9 @@
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|end"
             android:layout_marginStart="@dimen/l1"
+            android:elevation="@dimen/btn_highlight"
             android:layout_marginEnd="@dimen/l1"
-            android:layout_marginBottom="60dp"
+            android:layout_marginBottom="64dp"
             app:layout_fitsSystemWindowsInsets="bottom"
             app:srcCompat="@drawable/ic_folder_list"
             tools:layout_marginBottom="64dp" />

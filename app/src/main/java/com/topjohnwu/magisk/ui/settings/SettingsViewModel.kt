@@ -43,6 +43,7 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
         val list = mutableListOf(
             Theme, Language
         )
+        list.remove(Theme)
         if (isRunningAsStub && ShortcutManagerCompat.isRequestPinShortcutSupported(context))
             list.add(AddShortcut)
 

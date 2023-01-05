@@ -26,6 +26,19 @@
             tools:layout_gravity="center"
             android:focusable="false">
 
+            <ImageView
+                android:id="@+id/home_manager_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:scaleType="fitCenter"
+                android:layout_marginTop="10dp"
+                android:adjustViewBounds="true"
+                app:tint="?attr/colorOnSurface"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_manager"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"/>
+
             <TextView
                 android:id="@+id/home_manager_title"
                 android:layout_width="0dp"
@@ -34,18 +47,22 @@
                 android:textAppearance="@style/AppearanceFoundation.Title"
                 android:maxLines="1"
                 android:ellipsize="end"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintEnd_toStartOf="@+id/home_manager_button"
-                app:layout_constraintStart_toStartOf="parent"
+                android:layout_marginLeft="10dp"
+                app:tint="?attr/colorOnSurface"
+                android:layout_centerVertical="true"
+                app:layout_constraintTop_toTopOf="@+id/home_manager_icon"
+                app:layout_constraintBottom_toBottomOf="@+id/home_manager_icon"
+                app:layout_constraintStart_toEndOf="@+id/home_manager_icon"
                 tools:text="@string/home_app_title" />
 
             <FrameLayout
                 android:id="@+id/home_manager_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintBottom_toBottomOf="@+id/home_manager_title"
-                app:layout_constraintTop_toTopOf="@+id/home_manager_title">
+                android:layout_centerVertical="true"
+                app:layout_constraintTop_toTopOf="@+id/home_manager_icon"
+                app:layout_constraintBottom_toBottomOf="@+id/home_manager_icon"
+                app:layout_constraintRight_toRightOf="parent">
 
                 <Button
                     style="@style/WidgetFoundation.Button"
@@ -54,6 +71,7 @@
                     android:layout_height="wrap_content"
                     android:onClick="@{() -> viewModel.onManagerPressed()}"
                     android:text="@string/update"
+                    android:elevation="@dimen/btn_highlight"
                     android:textAllCaps="false"
                     android:layout_gravity="end"
                     app:icon="@drawable/ic_update_md2" />
