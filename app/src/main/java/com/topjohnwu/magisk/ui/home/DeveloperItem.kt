@@ -28,6 +28,10 @@ private interface DngImpl : Dev {
     override val name get() = "datnerdguy"
 }
 
+private interface HcatImpl : Dev {
+    override val name get() = "HardcodedCat"
+}
+
 sealed class DeveloperItem : Dev {
 
     abstract val items: List<IconLink>
@@ -70,6 +74,13 @@ sealed class DeveloperItem : Dev {
         override val items =
             listOf<IconLink>(
                 object : IconLink.Github.User(), DngImpl {}
+            )
+    }
+
+    object Hcat : DeveloperItem(), HcatImpl {
+        override val items =
+            listOf<IconLink>(
+                object : IconLink.Github.User(), HcatImpl {}
             )
     }
 }
