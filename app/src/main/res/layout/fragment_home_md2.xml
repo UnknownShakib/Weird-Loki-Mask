@@ -67,7 +67,7 @@
 
                     <Button
                         android:id="@+id/home_notice_hide"
-                        style="@style/WidgetFoundation.Button.Text.OnPrimary"
+                        style="@style/WidgetFoundation.Button.Text"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:onClick="@{() -> viewModel.hideNotice()}"
@@ -120,6 +120,7 @@
                 android:textAllCaps="false"
                 android:textSize="20sp"
                 app:cornerRadius="10dp"
+                app:iconSize="24sp"
                 app:icon="@drawable/ic_delete_md2" />
 
                 <LinearLayout
@@ -244,6 +245,14 @@
 
                     <include
                         item="@{DeveloperItem.Dng.INSTANCE}"
+                        layout="@layout/item_developer"
+                        viewModel="@{viewModel}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/l_50" />
+
+                    <include
+                        item="@{DeveloperItem.Hcat.INSTANCE}"
                         layout="@layout/item_developer"
                         viewModel="@{viewModel}"
                         android:layout_width="wrap_content"
