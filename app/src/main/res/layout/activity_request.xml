@@ -12,140 +12,91 @@
     </data>
 
     <com.google.android.material.card.MaterialCardView
-        style="@style/WidgetFoundation.Card.Elevated"
+        style="@style/WidgetFoundation.Card.Elevated.Dialog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        app:cardBackgroundColor="@color/request_dialog"
         android:layout_gravity="center">
 
         <LinearLayout
             android:id="@+id/su_popup"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="350dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp"
             android:orientation="vertical">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_centerHorizontal="true"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_superuser"
+                android:layout_gravity="center_horizontal"
+                app:tint="?android:colorAccent"
+                app:tintMode="src_in" />
 
             <TextView
                 android:id="@+id/request_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/l1"
-                android:layout_marginBottom="@dimen/l_50"
+                android:textSize="20sp"
+                android:textColor="?android:textColorPrimary"
+                android:paddingStart="24dp"
+                android:paddingTop="16dp"
+                android:paddingEnd="24dp"
+                android:paddingBottom="16dp"
                 android:gravity="center_horizontal"
-                android:text="@string/su_request_title"
-                android:textAppearance="@style/AppearanceFoundation.Title" />
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_marginTop="@dimen/l_50"
-                android:layout_marginBottom="@dimen/l_50"
-                android:orientation="horizontal"
-                android:paddingStart="10dp"
-                android:paddingEnd="10dp">
-
-                <ImageView
-                    android:id="@+id/app_icon"
-                    style="@style/WidgetFoundation.Icon"
-                    android:layout_gravity="center_vertical"
-                    android:layout_marginStart="@dimen/l_50"
-                    android:layout_marginEnd="@dimen/l1"
-                    android:layout_weight="0"
-                    android:padding="0dp"
-                    android:src="@{viewModel.icon}"
-                    app:tint="@null"
-                    tools:src="@drawable/ic_delete_md2" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center_vertical"
-                    android:layout_weight="1"
-                    android:gravity="center_vertical"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/app_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxWidth="300dp"
-                        android:maxLines="1"
-                        android:minWidth="200dp"
-                        android:text="@{viewModel.title}"
-                        android:textAppearance="@style/AppearanceFoundation.Body"
-                        android:textStyle="bold"
-                        tools:text="Magisk" />
-
-                    <TextView
-                        android:id="@+id/package_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxWidth="300dp"
-                        android:maxLines="1"
-                        android:minWidth="200dp"
-                        android:text="@{viewModel.packageName}"
-                        android:textAppearance="@style/AppearanceFoundation.Caption.Variant"
-                        tools:text="com.topjohnwu.magisk" />
-                </LinearLayout>
-            </LinearLayout>
+                android:text="@{@string/su_request_string1 + viewModel.title + @string/su_request_string2}"
+                android:textAppearance="@style/AppearanceFoundation.Title"
+                tools:text="Magisk"/>
 
             <Spinner
                 android:id="@+id/timeout"
                 onTouch="@{() -> viewModel.spinnerTouched()}"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginBottom="2dp"
                 android:layout_gravity="center_horizontal"
                 android:enabled="@{viewModel.grantEnabled}"
                 app:items="@{@stringArray/allow_timeout}"
                 app:layout="@{@layout/item_spinner}"
                 android:selection="@={viewModel.selectedItemPosition}" />
 
-            <TextView
-                android:id="@+id/warning"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                android:layout_margin="@dimen/l1"
-                android:gravity="center"
-                android:text="@string/su_warning"
-                android:textAppearance="@style/AppearanceFoundation.Body"
-                android:textColor="?colorError"
-                android:textStyle="bold"
-                tools:text="@string/su_warning" />
-
             <LinearLayout
                 style="?android:buttonBarStyle"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:gravity="bottom"
-                android:orientation="horizontal"
-                android:paddingStart="@dimen/l2"
-                android:paddingEnd="@dimen/l2">
-
-                <Button
-                    android:id="@+id/deny_btn"
-                    style="@style/WidgetFoundation.Button.Text"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:onClick="@{() -> viewModel.denyPressed()}"
-                    android:text="@{viewModel.denyText}"
-                    android:textColor="?colorOnSurfaceVariant"
-                    tools:text="@string/deny" />
+                android:orientation="vertical">
 
                 <Button
                     android:id="@+id/grant_btn"
-                    style="@style/WidgetFoundation.Button.Text"
+                    style="@style/GrantPermissionsButtons.Top"
                     onTouch="@{viewModel.grantTouchListener}"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
+                    android:textColor="?colorOnPrimaryContainer"
+                    app:backgroundTint="?colorPrimaryContainer"
+                    android:layout_centerHorizontal="true"
                     android:onClick="@{() -> viewModel.grantPressed()}"
                     android:enabled="@{viewModel.grantEnabled}"
                     android:text="@string/grant" />
+
+                <Button
+                    android:id="@+id/deny_btn"
+                    style="@style/GrantPermissionsButtons.Buttom"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="?colorOnPrimaryContainer"
+                    app:backgroundTint="?colorPrimaryContainer"
+                    android:layout_centerHorizontal="true"
+                    android:onClick="@{() -> viewModel.denyPressed()}"
+                    android:text="@{viewModel.denyText}"
+                    tools:text="@string/deny" />
 
                 <requestFocus />
             </LinearLayout>
