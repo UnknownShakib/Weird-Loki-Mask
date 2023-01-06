@@ -69,10 +69,6 @@ jobs:
       - name: Set up NDK
         run: python build.py -v ndk
 
-      - name: Build release
-        run: |
-          python build.py -vr all
-
       - name: Build debug
         run: |
           python build.py -v all
