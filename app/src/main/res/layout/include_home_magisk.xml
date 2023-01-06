@@ -35,7 +35,7 @@
                 android:adjustViewBounds="true"
                 app:tint="?attr/colorOnSurface"
                 android:layout_centerVertical="true"
-                android:src="@drawable/ic_magisk"
+                android:src="@drawable/ic_magisk_outline"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"/>
 

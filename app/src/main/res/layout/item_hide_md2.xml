@@ -43,7 +43,7 @@
                 <ProgressBar
                     style="@style/WidgetFoundation.ProgressBar"
                     gone="@{item.checkedPercent == 0}"
-                    android:layout_width="fill_parent"
+                    android:layout_width="match_parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     android:layout_centerHorizontal="true"
@@ -83,7 +83,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:text="@{item.info.packageName}"
-                    android:textSize="12sp"
+                    android:textSize="14sp"
                     android:textAppearance="@style/AppearanceFoundation.Tiny.Secondary"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="@+id/hide_name"
