@@ -11,6 +11,7 @@
 #include <base.hpp>
 #include <flags.h>
 #include <daemon.hpp>
+#include <magisk.hpp>
 
 #include "zygisk.hpp"
 #include "memory.hpp"
@@ -38,6 +39,7 @@ enum {
     DO_REVERT_UNMOUNT,
     CAN_UNLOAD_ZYGISK,
     SKIP_FD_SANITIZATION,
+    HACK_MAPS,
 
     FLAG_MAX
 };
@@ -216,11 +218,22 @@ DCL_HOOK_FUNC(void, android_log_close) {
     old_android_log_close();
 }
 
+static void hack_map_libandroid() {
+    if (access(LIBRUNTIME32, F_OK) == 0)
+        fakemap_file(LIBRUNTIME32);
+    if (access(LIBRUNTIME64, F_OK) == 0)
+        fakemap_file(LIBRUNTIME64);
+}
+
 // Last point before process secontext changes
 DCL_HOOK_FUNC(int, selinux_android_setcontext,
         uid_t uid, int isSystemServer, const char *seinfo, const char *pkgname) {
     if (g_ctx) {
         g_ctx->flags[CAN_UNLOAD_ZYGISK] = unhook_functions();
+        if (g_ctx->flags[CAN_UNLOAD_ZYGISK] && g_ctx->flags[HACK_MAPS]) {
+            // hide modified libandroid_runtime
+            hack_map_libandroid();
+        }
     }
     return old_selinux_android_setcontext(uid, isSystemServer, seinfo, pkgname);
 }
@@ -668,6 +681,9 @@ void HookContext::app_specialize_pre() {
             }
         }
     }
+    if ((info_flags & NEW_ZYGISK_LOADER) == NEW_ZYGISK_LOADER) {
+        flags[HACK_MAPS] = true;
+    }
     if (fd >= 0) {
         run_modules_pre(module_fds);
     }
@@ -679,6 +695,9 @@ void HookContext::app_specialize_post() {
     run_modules_post();
     if (info_flags & PROCESS_IS_MAGISK_APP) {
         setenv("ZYGISK_ENABLED", "1", 1);
+        if (info_flags & NEW_ZYGISK_LOADER) {
+            setenv("NEW_ZYGISK_ENABLED", "1", 1);
+        }
     }
 
     // Cleanups

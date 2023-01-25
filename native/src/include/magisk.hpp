@@ -61,6 +61,12 @@ constexpr const char *applet_names[] = { "su", "resetprop", "magiskhide", nullpt
 #define POST_FS_DATA_WAIT_TIME       40
 #define POST_FS_DATA_SCRIPT_MAX_TIME 35
 
+#define SYSTEMDIR    "/system"
+#define LIBDIR       SYSTEMDIR "/lib"
+#define LIB64DIR     LIBDIR "64"
+#define LIBRUNTIME32 LIBDIR "/libandroid_runtime.so"
+#define LIBRUNTIME64 LIB64DIR "/libandroid_runtime.so"
+
 extern int SDK_INT;
 extern bool HAVE_32;
 #define APP_DATA_DIR (SDK_INT >= 24 ? "/data/user_de" : "/data/user")

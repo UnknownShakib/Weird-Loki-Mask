@@ -110,7 +110,7 @@ extern "C" void zygisk_log_write(int prio, const char *msg, int len) {
     // For some reason, zygote sanitizes and checks FDs *before* forking. This results in the fact
     // that *every* time before zygote forks, it has to close all logging related FDs in order
     // to pass FD checks, just to have it re-initialized immediately after any
-    // logging happens ¯\_(?)_/¯.
+    // logging happens Â¯\_(?)_/Â¯.
     //
     // To be consistent with this behavior, we also have to close the log pipe to magiskd
     // to make zygote NOT crash if necessary. For nativeForkAndSpecialize, we can actually
@@ -242,6 +242,7 @@ static int zygote_start_counts[] = { 0, 0 };
 #define zygote_start_reset(val) { zygote_start_counts[0] = val; zygote_start_counts[1] = val; }
 
 static void set_native_bridge() {
+    if (new_zygisk_enabled) return;
     if (!nb_replace_lib.empty() && nb_replace_lib != "0"){
         setprop(NATIVE_BRIDGE_PROP, nb_replace_lib.data(), false);
     } else {
@@ -251,6 +252,7 @@ static void set_native_bridge() {
 }
 
 static void reset_native_bridge() {
+	if (new_zygisk_enabled) return;
     setprop(NATIVE_BRIDGE_PROP, orig_native_bridge.data(), false);
     ZLOGD("native bridge has been reset\n");
 }
@@ -327,6 +329,9 @@ static void get_process_info(int client, const sock_cred *cred) {
     }
     if (uid_granted_root(uid)) {
         flags |= PROCESS_GRANTED_ROOT;
+    }
+    if (new_zygisk_enabled) {
+        flags |= NEW_ZYGISK_LOADER;
     }
 
     xwrite(client, &flags, sizeof(flags));
