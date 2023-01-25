@@ -272,6 +272,8 @@
     <string name="settings_sulist_error_zygisk">此功能与 Zygisk 不共存</string>
     <string name="settings_sulist_summary">仅超级用户列表内的进程可以访问 Magisk</string>
     <string name="settings_sulist_title">强制使用超级用户列表</string>
+    <string name="new_zygisk_loader">新的 Zygisk 加载方式</string>
+    <string name="settings_new_zygisk_loader_summary">使用新的 Zygisk 加载方式，此功能为实验性功能，可能会破坏部分模块的正常工作</string>
 
 
 

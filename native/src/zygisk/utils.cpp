@@ -32,6 +32,22 @@ void unmap_all(const char *name) {
     }
 }
 
+void fakemap_file(const char *name) {
+    auto maps = find_maps(name);
+    remap_all(name);
+    for (auto &info : maps) {
+        //void *addr = reinterpret_cast<void *>(info.start);
+        size_t size = info.end - info.start;
+        int fd = open(name, O_RDONLY);
+        if (fd >= 0) {
+            xmmap(nullptr, size, info.perms, MAP_PRIVATE, fd, info.offset);
+            close(fd);
+        } else {
+            LOGE("open %s failed\n", name);
+        }
+    }
+}
+
 void remap_all(const char *name) {
     auto maps = find_maps(name);
     for (auto &info : maps) {

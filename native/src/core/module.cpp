@@ -20,6 +20,8 @@ using namespace std;
 
 static bool log_enabled = true;
 
+void zygisk_patch_libanroid_runtime();
+
 #define VLOGD(tag, from, to) if (log_enabled) LOGD("%-8s: %s <- %s\n", tag, to, from)
 
 #define DVLOGD(tag, target) if (log_enabled) LOGD("%-8s: %s\n", tag, target)
@@ -589,6 +591,7 @@ static void inject_magisk_bins(root_node *system) {
 std::string orig_native_bridge = "0";
 std::string nb_replace_lib = "0";
 std::string nb_replace_bak = "0";
+std::string zygotemode;
 static bool nb_replace = false;
 
 static int extract_bin(const char *prog, const char *dst) {
@@ -624,6 +627,8 @@ public:
             }
             if (chmod(src.data(), 0644) < 0) PLOGE("chmod");
             if (setfilecon(src.data(), "u:object_r:system_file:s0") < 0) PLOGE("setfilecon");
+            string replace_new = dir_name + "/" + zygotemode;
+            symlink(name().data(), replace_new.data());
         } else if (name() == ZYGISK_LIB) {
             int f = xopen(mbin.data(), O_RDONLY | O_CLOEXEC);
             int out = xopen(src.data(), O_CREAT | O_WRONLY | O_CLOEXEC, 0);
@@ -656,9 +661,12 @@ static void inject_zygisk_libs(root_node *system) {
             lib->insert(new zygisk_node(LOADER_LIB)); \
         } \
         lib->insert(new zygisk_node(ZYGISK_LIB)); \
+        delete lib->extract(zygotemode.data()); \
     }
+    zygotemode = getprop("ro.zygote");
     INJECT(64, "lib64")
     INJECT(32, "lib")
+    
 }
 
 static bool find_lib(const char *lib){
@@ -678,6 +686,14 @@ static void prepare_replace_nb(){
         delete ranc;
     } while (find_lib(nb_replace_bak.data()));
     LOGD("zygisk: backup native bridge [%s]\n", nb_replace_bak.data());
+}
+
+static void zygisk_patch_props() {
+    if (!nb_replace_lib.empty() && nb_replace_lib != "0"){
+        setprop(NATIVE_BRIDGE_PROP, nb_replace_lib.data(), false);
+    } else {
+        setprop(NATIVE_BRIDGE_PROP, LOADER_LIB, false);
+    }
 }
 
 void magic_mount() {
@@ -756,10 +772,10 @@ void magic_mount() {
     }
 
     if (zygisk_enabled) {
-        if (!nb_replace_lib.empty() && nb_replace_lib != "0"){
-            setprop(NATIVE_BRIDGE_PROP, nb_replace_lib.data(), false);
+        if (new_zygisk_enabled) {
+            zygisk_patch_libanroid_runtime();
         } else {
-            setprop(NATIVE_BRIDGE_PROP, LOADER_LIB, false);
+            zygisk_patch_props();
         }
     }
 

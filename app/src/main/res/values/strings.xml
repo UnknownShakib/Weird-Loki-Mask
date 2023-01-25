@@ -272,5 +272,7 @@
     <string name="settings_sulist_error_zygisk">This feature cannot coexist with zygisk</string>
     <string name="settings_sulist_error_magiskhide">This feature need MagiskHide to be enabled</string>
     <string name="settings_sulist_enforced">SuList is enforced</string>
+    <string name="new_zygisk_loader">New Zygisk loader</string>
+    <string name="settings_new_zygisk_loader_summary">Use new way to load Zygisk. This feature is experimental and it can break some hooking module.</string>
 
 </resources>

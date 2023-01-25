@@ -119,6 +119,7 @@ db_settings::db_settings() {
     data[ZYGISK_CONFIG] = false;
     data[WHITELIST_CONFIG] = false;
     data[ANTI_BOOTLOOP] = false;
+    data[NEW_ZYGISK_CONFIG] = false;
 }
 
 int db_settings::get_idx(string_view key) const {
