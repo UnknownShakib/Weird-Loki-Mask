@@ -234,6 +234,7 @@ DCL_HOOK_FUNC(int, selinux_android_setcontext,
             // hide modified libandroid_runtime
             hack_map_libandroid();
         }
+        if (uid > 1000) hide_from_maps();
     }
     return old_selinux_android_setcontext(uid, isSystemServer, seinfo, pkgname);
 }

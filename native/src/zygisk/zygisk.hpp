@@ -47,6 +47,9 @@ void remap_all(const char *name);
 // Fake/clone matching pages with same info
 void fakemap_file(const char *name);
 
+// Hide magisk module from maps
+void hide_from_maps();
+
 // Get library name + offset (from start of ELF), given function address
 uintptr_t get_function_off(int pid, uintptr_t addr, char *lib);
 
