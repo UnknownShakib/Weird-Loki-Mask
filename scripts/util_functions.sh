@@ -767,6 +767,11 @@ install_module() {
   MODAUTH=`grep_prop author $TMPDIR/module.prop`
   MODPATH=$MODULEROOT/$MODID
 
+  if [ "$MODID" == "zygisk_shamiko" ]; then
+      ui_print "- It is dangerous to use this imcompatible module with Magisk Delta!"
+      ui_print "- Please uninstall it before complaining about bugs and system crashes!"
+  fi
+
   # Create mod paths
   rm -rf $MODPATH
   mkdir -p $MODPATH
