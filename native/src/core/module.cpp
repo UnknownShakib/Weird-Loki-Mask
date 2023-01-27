@@ -793,6 +793,7 @@ static void foreach_module(Func fn) {
 static void collect_modules(bool open_zygisk) {
     foreach_module([=](int dfd, dirent *entry, int modfd) {
         if (faccessat(modfd, "remove", F_OK, 0) == 0) {
+        	
             LOGI("%s: remove\n", entry->d_name);
             auto uninstaller = MODULEROOT + "/"s + entry->d_name + "/uninstall.sh";
             if (access(uninstaller.data(), F_OK) == 0)
@@ -809,6 +810,11 @@ static void collect_modules(bool open_zygisk) {
         if (zygisk_enabled) {
             // Riru and its modules are not compatible with zygisk
             if (entry->d_name == "riru-core"sv || faccessat(modfd, "riru", F_OK, 0) == 0) {
+                LOGI("%s: ignore\n", entry->d_name);
+                return;
+            }
+            if (entry->d_name == "zygisk_shamiko"sv && faccessat(modfd, "zygisk", F_OK, 0) == 0) {
+                openat(modfd, "zygisk/unloaded", O_RDONLY | O_CREAT, 0);
                 LOGI("%s: ignore\n", entry->d_name);
                 return;
             }
