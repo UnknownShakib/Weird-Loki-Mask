@@ -48,7 +48,12 @@ extern "C" __used void* zygisk_inject_entry(void *handle, void *callbacks) {
         auto orig_bridge_name = read_string(fd);
         auto bak_bridge_name = read_string(fd);
         int sdk = read_int(fd);
+        sulist_enabled = (bool)read_int(fd);
         close(fd);
+
+        if (sulist_enabled) {
+            LOGI("** Enable Zygisk SuList\n");
+        }
 
         if (orig_bridge_name.empty()) {
             ZLOGE("failed to read orig bridge name\n");
@@ -307,6 +312,7 @@ static void setup(int client, const sock_cred *cred) {
     write_string(client, orig_native_bridge);
     write_string(client, nb_replace_bak);
     write_int(client, SDK_INT);
+    write_int(client, (sulist_enabled)? 1 : 0);
 }
 
 extern bool uid_granted_root(int uid);
@@ -317,8 +323,8 @@ static void get_process_info(int client, const sock_cred *cred) {
     uint32_t flags = 0;
 
     check_pkg_refresh();
-    if (!sulist_enabled && is_deny_target(uid, process)) {
-        flags |= PROCESS_ON_DENYLIST;
+    if (is_deny_target(uid, process)) {
+        flags |= (sulist_enabled)? PROCESS_ON_ALLOWLIST : PROCESS_ON_DENYLIST;
     }
     int manager_app_id = get_manager();
     if (to_app_id(uid) == manager_app_id) {
@@ -435,6 +441,9 @@ static void zygote_listener(int fd) {
 }
 
 static void on_system_server_forked(int client, int pid) {
+    if (sulist_enabled) {
+        unmount_zygote();
+    }
     char buf[4096];
     ssprintf(buf, sizeof(buf), "%s/%s/%d", MAGISKTMP.data(), ZYGISKBIN, pid);
 

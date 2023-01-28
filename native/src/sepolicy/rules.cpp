@@ -188,6 +188,18 @@ void sepolicy::magisk_rules() {
     allow("zygote", "fs_type", "filesystem", "unmount");
     allow("system_server", "system_server", "process", "execmem");
 
+    // Zygisk SuList rules
+    allow("zygote", ALL, "filesystem", "remount");
+    allow("zygote", "zygote", "capability", "sys_ptrace");
+    allow("zygote", "zygote", "capability", "sys_chroot");
+    allow("zygote", "unlabeled", "file", "open");
+    allow("zygote", "unlabeled", "file", "read");
+    // Just in case something is missing
+    allow("zygote", "init", "file", ALL);
+    allow("zygote", "init", "dir", ALL);
+    allow("zygote", "init", "lnk_file", ALL);
+    allow("zygote", ALL, "filesystem", "mount");
+
     // Shut llkd up
     dontaudit("llkd", SEPOL_PROC_DOMAIN, "process", "ptrace");
     dontaudit("llkd", SEPOL_CLIENT_DOMAIN, "process", "ptrace");
