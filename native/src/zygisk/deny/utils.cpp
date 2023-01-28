@@ -402,7 +402,7 @@ int enable_deny() {
             denylist_enforced = false;
             return DenyResponse::ERROR;
         }
-        if ((!zygisk_enabled || sulist_enabled) && do_monitor) {
+        if (!zygisk_enabled && do_monitor) {
             auto ret1 = new_daemon_thread(&proc_monitor);
             if (ret1){
                 // cannot start monitor_proc, return daemon error
@@ -452,7 +452,7 @@ int disable_deny() {
         denylist_enforced = false;
         LOGI("* Disable MagiskHide\n");
     }
-    if ((!zygisk_enabled || sulist_enabled) && monitoring) {
+    if (!zygisk_enabled && monitoring) {
         pthread_kill(monitor_thread, SIGTERMTHRD);
         monitoring = false;
     }
@@ -653,6 +653,16 @@ static bool is_zygote(int pid_){
             && (check_process2(pid_, "zygote", "u:r:zygote:s0", nullptr)  
             || check_process2(pid_, "zygote64", "u:r:zygote:s0", nullptr)
             || check_process2(pid_, "zygote32", "u:r:zygote:s0", nullptr));
+}
+
+void unmount_zygote(){
+    crawl_procfs([](int pid) -> bool {
+        if (is_zygote(pid) && parse_ppid(pid) == 1) {
+            LOGI("zygote pid=[%d]\n", pid); 
+            revert_daemon(pid, -2);
+        }
+        return true;
+    });
 }
 
 static void check_zygote(){

@@ -5,6 +5,10 @@
 #include <bitset>
 #include <list>
 #include <sys/prctl.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <sys/stat.h>
 
 #include <lsplt.hpp>
 
@@ -40,6 +44,7 @@ enum {
     CAN_UNLOAD_ZYGISK,
     SKIP_FD_SANITIZATION,
     HACK_MAPS,
+    DO_ALLOW,
 
     FLAG_MAX
 };
@@ -190,15 +195,56 @@ DCL_HOOK_FUNC(int, fork) {
 
 // Unmount stuffs in the process's private mount namespace
 DCL_HOOK_FUNC(int, unshare, int flags) {
-    int res = old_unshare(flags);
-    if (g_ctx && (flags & CLONE_NEWNS) != 0 && res == 0) {
-        if (g_ctx->flags[DO_REVERT_UNMOUNT]) {
+    int res;
+    if (g_ctx && (flags & CLONE_NEWNS) != 0) {
+        if (g_ctx->flags[DO_ALLOW]) {
+            flags &= ~CLONE_NEWNS;
+            res = old_unshare(flags);
+            int clone_pid;
+            int pipe_fd[2];
+            if (pipe(pipe_fd) < 0) {
+                LOGE("cannot create pipe\n");
+                goto final_way;
+            }
+            clone_pid = fork();
+            if (clone_pid > 0) {
+                int i=0;
+                read(pipe_fd[0], &i, sizeof(i));
+                if (switch_mnt_ns(clone_pid) == 0) {
+                    ZLOGD("switched to root mount namespace\n");
+                }
+                kill(clone_pid, SIGKILL);
+                waitpid(clone_pid, 0, 0);
+                close(pipe_fd[0]);
+                close(pipe_fd[1]);
+            } else if (clone_pid == 0) {
+                int i=0;
+                prctl(PR_SET_PDEATHSIG, SIGKILL);
+                if (switch_mnt_ns(1) == 0) {
+                    old_unshare(CLONE_NEWNS);
+                    ZLOGD("created root mount namespace\n");
+                    xmount("", "/", nullptr, MS_SLAVE | MS_REC, nullptr);
+                    xmount("", "/", nullptr, MS_PRIVATE | MS_REC, nullptr);
+                } else {
+                    ZLOGE("unable to create root mount namespace\n");
+                }
+                write(pipe_fd[1], &i, sizeof(i));
+                while (true) pause();
+            } else {
+                ZLOGE("unable to switch to root mount namespace\n");
+            }
+            goto final_way;
+        }
+        res = old_unshare(flags);
+        if (g_ctx->flags[DO_REVERT_UNMOUNT] && res == 0) {
             revert_unmount();
         }
+        final_way:
         // Restore errno back to 0
         errno = 0;
+        return res;
     }
-    return res;
+    return old_unshare(flags);
 }
 
 // Close logd_fd if necessary to prevent crashing
@@ -680,6 +726,14 @@ void HookContext::app_specialize_pre() {
             if (__system_property_get("ro.build.version.sdk", sdk_ver_str) && atoi(sdk_ver_str) < 30) {
                 args.app->mount_external = 1 /* MOUNT_EXTERNAL_DEFAULT */;
             }
+        }
+    }
+    if ((info_flags & PROCESS_ON_ALLOWLIST) == PROCESS_ON_ALLOWLIST) {
+        ZLOGI("[%s] is on the allowlist\n", process);
+        flags[DO_ALLOW] = true;
+        // Ensure separated namespace, allow denylist to handle isolated process before Android 11
+        if (args.app->mount_external == 0 /* MOUNT_EXTERNAL_NONE */) {
+            args.app->mount_external = 1 /* MOUNT_EXTERNAL_DEFAULT */;
         }
     }
     if ((info_flags & NEW_ZYGISK_LOADER) == NEW_ZYGISK_LOADER) {
