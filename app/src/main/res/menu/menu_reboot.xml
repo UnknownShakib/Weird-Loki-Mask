@@ -30,4 +30,8 @@
         android:id="@+id/action_reboot_edl"
         android:title="@string/reboot_edl" />
 
+    <item
+        android:id="@+id/action_unload_magisk"
+        android:title="@string/settings_unload_magisk_title" />
+
 </menu>

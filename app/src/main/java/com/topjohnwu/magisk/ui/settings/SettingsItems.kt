@@ -339,11 +339,6 @@ object SuList : BaseSettingsItem.Toggle() {
 	val mismatch get() = value != Info.sulist
 }
 
-object unloadMagisk : BaseSettingsItem.Blank() {
-    override val title = R.string.settings_unload_magisk_title.asText()
-    override val description = R.string.settings_unload_magisk_summary.asText()
-}
-
 object DenyListConfig : BaseSettingsItem.Blank() {
     var status = Shell.cmd("magisk --hide sulist").exec().isSuccess;
 

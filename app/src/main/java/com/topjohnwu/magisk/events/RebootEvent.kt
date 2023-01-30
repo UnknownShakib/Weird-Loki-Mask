@@ -22,13 +22,14 @@ object RebootEvent {
             R.id.action_reboot_edl -> systemReboot("edl")
             R.id.action_reboot_recovery -> systemReboot("recovery")
             R.id.action_reboot_core_only -> systemReboot_CoreOnly()
+            R.id.action_unload_magisk -> Shell.cmd("unload_magisk").submit()
             else -> Unit
         }
         return true
     }
 
     private fun systemReboot_CoreOnly(){
-        Shell.cmd("rm -rf /data/adb/.disable_magisk /cache/.disable_magisk /metadata/.disable_magisk /data/unencrypted/.disable_magisk /persist/.disable_magisk /mnt/vendor/persist/.disable_magisk; touch /data/adb/.disable_magisk /cache/.disable_magisk /metadata/.disable_magisk /data/unencrypted/.disable_magisk /persist/.disable_magisk /mnt/vendor/persist/.disable_magisk; /system/bin/svc power reboot || /system/bin/reboot").submit()
+        Shell.cmd("core_only enable; /system/bin/svc power reboot || /system/bin/reboot").submit()
     }
 
     fun inflateMenu(activity: BaseActivity): PopupMenu {

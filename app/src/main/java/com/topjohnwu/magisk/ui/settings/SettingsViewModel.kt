@@ -95,10 +95,6 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
                 // Can hide overlay windows on 12.0+
                 list.remove(Tapjack)
             }
-            if (Const.Version.atLeast_24_0()) {
-                // Can disable Magisk
-                list.add(unloadMagisk)
-            } 
         }
 
         return list
@@ -112,7 +108,6 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
             Theme -> SettingsFragmentDirections.actionSettingsFragmentToThemeFragment().navigate()
             DenyListConfig -> SettingsFragmentDirections.actionSettingsFragmentToDenyFragment().navigate()
             SystemlessHosts -> createHosts()
-            unloadMagisk -> stopMagisk()
             CleanHideList -> clean_HideList()
             Hide, Restore -> withInstallPermission(andThen)
             AddShortcut -> AddHomeIconEvent().publish()
@@ -154,12 +149,6 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
     private fun clean_HideList() {
         Shell.cmd("clean_hidelist").submit {
             Utils.toast(R.string.settings_clean_hidelist_toast, Toast.LENGTH_SHORT)
-        }
-    }
-
-    private fun stopMagisk() {
-        Shell.cmd("unload_magisk").submit {
-            Utils.toast(R.string.settings_unload_magisk_toast, Toast.LENGTH_SHORT)
         }
     }
 }

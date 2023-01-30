@@ -255,8 +255,21 @@ fi
 return 1
 }
 
+kill_magisk_shell() {
+    pid_set=""
+    for p in /proc/*/cmdline; do
+        pid="${p%/*}"
+        pid="${pid##*/}"
+		if [ "$(cat /proc/$pid/attr/prev)" == "u:r:magisk:s0" ]; then
+            pid_set="$pid $pid_set"
+        fi
+    done
+    pid_set="$(echo "$pid_set" | sed "s/$$//g")"
+    kill -SIGKILL $pid_set
+}
+
 unload_magisk(){
-    magisk --stop
+    kill_magisk_shell; magisk --stop && { setprop ctl.restart zygote; }
 }
 
 
