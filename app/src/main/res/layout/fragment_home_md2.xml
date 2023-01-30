@@ -243,6 +243,14 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="@dimen/l_50" />
 
+                    <include
+                        item="@{DeveloperItem.Husky.INSTANCE}"
+                        layout="@layout/item_developer"
+                        viewModel="@{viewModel}"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/l_50" />
+
                 </LinearLayout>
 
         </LinearLayout>
