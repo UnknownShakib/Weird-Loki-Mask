@@ -276,11 +276,14 @@ DCL_HOOK_FUNC(int, selinux_android_setcontext,
         uid_t uid, int isSystemServer, const char *seinfo, const char *pkgname) {
     if (g_ctx) {
         g_ctx->flags[CAN_UNLOAD_ZYGISK] = unhook_functions();
-        if (g_ctx->flags[CAN_UNLOAD_ZYGISK] && g_ctx->flags[HACK_MAPS]) {
-            // hide modified libandroid_runtime
+        bool do_hide_maps = uid > 1000 && !g_ctx->flags[DO_ALLOW] && g_ctx->flags[DO_REVERT_UNMOUNT];
+        if (g_ctx->flags[CAN_UNLOAD_ZYGISK] && g_ctx->flags[HACK_MAPS] &&
+            // only hide if it is process on hidelist or not on sulist
+            do_hide_maps) {
+            // hide modified libandroid_runtime traces from maps
             hack_map_libandroid();
         }
-        if (uid > 1000) hide_from_maps();
+        if (do_hide_maps) hide_from_maps();
     }
     return old_selinux_android_setcontext(uid, isSystemServer, seinfo, pkgname);
 }
