@@ -274,6 +274,9 @@
     <string name="settings_sulist_title">强制使用超级用户列表</string>
     <string name="new_zygisk_loader">新的 Zygisk 加载方式</string>
     <string name="settings_new_zygisk_loader_summary">使用新的 Zygisk 加载方式，此功能为实验性功能，可能会破坏部分模块的正常工作</string>
+    <string name="settings_logcat_monitor_no_need">Zygisk 开启时无需使用本功能</string>
+    <string name="settings_logcat_monitor_summary">使用 logcat 而非 ptrace 监视应用进程的创建，logcat 比 ptrace 更难检测但不可靠</string>
+    <string name="settings_logcat_monitor_title">logcat 监视</string>
 
 
 

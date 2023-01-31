@@ -23,6 +23,7 @@
 #include <resetprop.hpp>
 
 #include "deny.hpp"
+#include "logcat.hpp"
 #include <sys/ptrace.h>
 
 
@@ -51,16 +52,19 @@ static pthread_mutex_t data_lock = PTHREAD_MUTEX_INITIALIZER;
 
 atomic<bool> denylist_enforced = false;
 
-atomic<bool> do_monitor = true;
+atomic<bool> logcat_monitor = false;
 
 static const char *table_name = "hidelist";
 
 // Process monitoring
 pthread_t monitor_thread;
 void proc_monitor();
+void logcat_proc_monitor();
 static bool monitoring = false;
 static int fork_pid = 0;
 static void do_scan_zygote();
+static int parse_ppid(int pid);
+static bool check_process(int pid, const char *process = 0, const char *context = 0, const char *exe = 0);
 #define do_kill (denylist_enforced)
 
 static void rescan_apps() {
@@ -367,6 +371,14 @@ static void update_deny_config() {
     db_err(err);
 }
 
+static void update_logcat_config() {
+    char sql[64];
+    sprintf(sql, "REPLACE INTO settings (key,value) VALUES('%s',%d)",
+        DB_SETTING_KEYS[LOGCAT_CONFIG], logcat_monitor.load());
+    char *err = db_exec(sql);
+    db_err(err);
+}
+
 static int new_daemon_thread(void(*entry)()) {
     thread_entry proxy = [](void *entry) -> void * {
         reinterpret_cast<void(*)()>(entry)();
@@ -402,9 +414,9 @@ int enable_deny() {
             denylist_enforced = false;
             return DenyResponse::ERROR;
         }
-        if (!zygisk_enabled && do_monitor) {
-            auto ret1 = new_daemon_thread(&proc_monitor);
-            if (ret1){
+        if (!zygisk_enabled) {
+            auto do_proc_monitor = (logcat_monitor)? new_daemon_thread(&logcat_proc_monitor) : new_daemon_thread(&proc_monitor);
+            if (do_proc_monitor){
                 // cannot start monitor_proc, return daemon error
                 return DenyResponse::ERROR;
             }
@@ -418,6 +430,9 @@ int enable_deny() {
             kill_process<&proc_context_match>("u:r:app_zygote:s0", true);
         }
         if (sulist_enabled) {
+            // Add SystemUI and Settings to sulist because modules might need to modify it
+            add_hide_set("com.android.systemui", "com.android.systemui");
+            add_hide_set("com.android.settings", "com.android.settings");
             add_hide_set(JAVA_PACKAGE_NAME, JAVA_PACKAGE_NAME);
         }
     }
@@ -427,20 +442,59 @@ int enable_deny() {
     return DenyResponse::OK;
 }
 
-void enable_monitor(){
-    if (do_monitor) return;
-    do_monitor = true;
-    LOGI("* Enable proc_monitor\n");
-}
-
-void disable_monitor(){
-    if (!do_monitor) return;
-    do_monitor = false;
-    LOGI("* Disable proc_monitor\n");
-    if (monitoring) {
+static int switch_monitor_method() {
+    if (!zygisk_enabled && monitoring) {
         pthread_kill(monitor_thread, SIGTERMTHRD);
         monitoring = false;
     }
+    usleep(100000);
+    if (!zygisk_enabled) {
+        auto do_proc_monitor = (logcat_monitor)? new_daemon_thread(&logcat_proc_monitor) : new_daemon_thread(&proc_monitor);
+        if (do_proc_monitor){
+            // cannot start monitor_proc, return daemon error
+            return DenyResponse::ERROR;
+        }
+        monitoring = true;
+    }
+    return DenyResponse::OK;
+}
+
+int enable_logcat_monitor() {
+    if (logcat_monitor || zygisk_enabled)
+        return DenyResponse::OK;
+    logcat_monitor = false;
+    if (procfp == nullptr && (procfp = opendir("/proc")) == nullptr)
+        return DenyResponse::ERROR;
+    crawl_procfs([=](int pid) -> bool {
+        if (parse_ppid(pid) == 1 && check_process(pid, "/system/bin/logd", "u:r:logd:s0", "/system/bin/logd")) {
+            logcat_monitor = true;
+            return false;
+        }
+        return true;
+    });
+    if (!logcat_monitor) {
+        LOGE("hide: logd is not running\n");
+        return DenyResponse::LOGCAT_DISABLED;
+    }
+    // switch monitor method to ptrace
+    if (denylist_enforced && !sulist_enabled) {
+        if (switch_monitor_method() != DenyResponse::OK)
+            return DenyResponse::ERROR;
+    }
+    LOGI("hide: enable logcat monitor\n");
+    update_logcat_config();
+    return DenyResponse::OK;
+}
+
+void disable_logcat_monitor() {
+    if (!logcat_monitor) return;
+    logcat_monitor = false;
+    // switch monitor method to logcat
+    if (denylist_enforced && !sulist_enabled) {
+    	switch_monitor_method();
+    }
+    LOGI("hide: disable logcat monitor\n");
+    update_logcat_config();
 }
 
 int disable_deny() {
@@ -466,6 +520,11 @@ void initialize_denylist() {
     if (!denylist_enforced) {
         db_settings dbs;
         get_db_settings(dbs, DENYLIST_CONFIG);
+        get_db_settings(dbs, LOGCAT_CONFIG);
+        if (dbs[LOGCAT_CONFIG]) {
+            enable_logcat_monitor();
+            usleep(5000);
+        }
         if (dbs[DENYLIST_CONFIG])
             enable_deny();
     }
@@ -608,7 +667,7 @@ static bool read_file(const char *file, char *buf, int count){
 }
 
 
-static bool check_process(int pid, const char *process = 0, const char *context = 0, const char *exe = 0) {
+static bool check_process(int pid, const char *process, const char *context, const char *exe) {
     char path[128];
     char buf[1024];
     ssize_t len;
@@ -1172,5 +1231,151 @@ void proc_monitor() {
             xptrace(PTRACE_CONT, pid, nullptr, signal);
             PTRACE_LOG("signal [%d]\n", signal);
         }
+    }
+}
+
+void LogPrint(struct logger_entry *buf) {
+    const char *msg = buf->msg + strlen(buf->msg) + 1;
+    if (const char *log = strstr(msg, "Forked child process")) {
+        sscanf(log, "Forked child process %d", &fork_pid);
+        kill(fork_pid, SIGSTOP);
+        new_daemon_thread(&do_check_fork);
+    }
+}
+
+void EventPrint(struct logger_entry *buf) {
+    auto *eventData = reinterpret_cast<const unsigned char *>(buf) + buf->hdr_size;
+    auto *event_header = reinterpret_cast<const android_event_header_t *>(eventData);
+    if (event_header->tag != 30014) return;
+    auto *am_proc_start = reinterpret_cast<const android_event_am_proc_start *>(eventData);
+    fork_pid = am_proc_start->pid.data;
+    kill(fork_pid, SIGSTOP);
+    new_daemon_thread(&do_check_fork);
+}
+
+void logcat_proc_monitor() {
+    monitor_thread = pthread_self();
+
+    // Backup original mask
+    sigset_t orig_mask;
+    pthread_sigmask(SIG_SETMASK, nullptr, &orig_mask);
+
+    sigset_t unblock_set;
+    sigemptyset(&unblock_set);
+    sigaddset(&unblock_set, SIGTERMTHRD);
+    sigaddset(&unblock_set, SIGIO);
+    sigaddset(&unblock_set, SIGALRM);
+
+    struct sigaction act{};
+    sigfillset(&act.sa_mask);
+    act.sa_handler = SIG_IGN;
+    sigaction(SIGTERMTHRD, &act, nullptr);
+    sigaction(SIGIO, &act, nullptr);
+    sigaction(SIGALRM, &act, nullptr);
+
+    // Temporary unblock to clear pending signals
+    pthread_sigmask(SIG_UNBLOCK, &unblock_set, nullptr);
+    pthread_sigmask(SIG_SETMASK, &orig_mask, nullptr);
+
+    act.sa_handler = term_thread;
+    sigaction(SIGTERMTHRD, &act, nullptr);
+    act.sa_handler = inotify_event;
+    sigaction(SIGIO, &act, nullptr);
+    act.sa_handler = [](int){ check_zygote(); };
+    sigaction(SIGALRM, &act, nullptr);
+
+    zygote_map.clear();
+    pid_map.clear();
+    setup_inotify();
+    attaches.reset();
+    log_id_t buffer = LOG_ID_EVENTS;
+    void (*ProcessBuffer)(struct logger_entry*) = EventPrint;
+    if (SDK_INT >= 29) {
+        buffer = LOG_ID_MAIN;
+    	ProcessBuffer = LogPrint;
+    }
+    char buf[1024];
+    int logd_crash_count = 0;
+
+    // First try find existing zygotes
+    check_zygote();
+    if (!is_zygote_done()) {
+        // Periodic scan every 250ms
+        timeval val { .tv_sec = 0, .tv_usec = 250000 };
+        itimerval interval { .it_interval = val, .it_value = val };
+        setitimer(ITIMER_REAL, &interval, nullptr);
+    }
+
+    start_monitor:
+    pthread_sigmask(SIG_UNBLOCK, &unblock_set, nullptr);
+    buf[0] = '\0';
+    sulist_unmount = false;
+    while (system_server_pid == -1 || !is_proc_alive(system_server_pid)) {
+        system_server_pid = -1;
+        pause();
+    }
+    if (sulist_enabled) {
+        for (auto it = zygote_map.begin(); it != zygote_map.end(); it++) {
+            revert_daemon(it->first, -2);
+        }
+        sulist_unmount = true;
+    }
+
+    for (;;) {
+        bool first;
+        if (__system_property_get("persist.log.tag", buf) && buf[0] != '\0')
+            __system_property_set("persist.log.tag", "");
+
+        unique_ptr<logger_list, decltype(&android_logger_list_free)> logger_list{
+            android_logger_list_alloc(0, 1, 0), &android_logger_list_free};
+        auto *logger = android_logger_open(logger_list.get(), buffer);
+        if (logger != nullptr) [[likely]] {
+            first = true;
+        } else {
+            continue;
+        }
+        struct log_msg msg{};
+        bool zygote = false;
+        int pid = -1;
+        while (true) {
+            if (android_logger_list_read(logger_list.get(), &msg) <= 0) [[unlikely]] {
+                break;
+            }
+            if (first) [[unlikely]] {
+                first = false;
+                logd_crash_count = 0;
+                continue;
+            }
+            if (buffer == LOG_ID_MAIN && msg.entry.uid != 0)
+            // only accept log from uid == 0
+                continue;
+            if (!is_proc_alive(system_server_pid)) {
+                goto start_monitor;
+            }
+            zygote = false;
+            pid = msg.entry.pid;
+            for (auto it = zygote_map.begin(); it != zygote_map.end(); it++) {
+                if (pid == it->first) {
+                    zygote = true;
+                    break;
+                }
+            }
+            if (zygote || pid == system_server_pid) {
+                pthread_sigmask(SIG_SETMASK, &orig_mask, nullptr);
+                ProcessBuffer(&msg.entry);
+                pthread_sigmask(SIG_UNBLOCK, &unblock_set, nullptr);
+            }
+        }
+        pthread_sigmask(SIG_SETMASK, &orig_mask, nullptr);
+        logd_crash_count++;
+        if (logd_crash_count >= 30) {
+            LOGE("proc_monitor: restarting logd doesn't help, fall back to ptrace...\n");
+            new_daemon_thread(&disable_logcat_monitor);
+        } else if (logd_crash_count >= 5) {
+            LOGE("proc_monitor: failed to read logcat, try restart logd...\n");
+        	__system_property_set("ctl.restart", "logd");
+        }
+        sleep(1);
+        pthread_sigmask(SIG_UNBLOCK, &unblock_set, nullptr);
     }
 }

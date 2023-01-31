@@ -19,8 +19,8 @@ enum : int {
     REMOVE,
     LIST,
     STATUS,
-    START_MONITOR,
-    STOP_MONITOR,
+    START_LOGCAT_MONITOR,
+    STOP_LOGCAT_MONITOR,
     CHECK_PID,
     SULIST_STATUS,
 
@@ -41,6 +41,7 @@ enum : int {
     SULIST_ENFORCED,
     SULIST_NOT_ENFORCED,
     SULIST_NO_DISABLE,
+    LOGCAT_DISABLED,
 
     END
 };
@@ -64,9 +65,9 @@ void su_daemon(int pid);
 void do_check_pid(int client);
 void unmount_zygote();
 
-//Event
-void disable_monitor();
-void enable_monitor();
+//Logcat
+void disable_logcat_monitor();
+int enable_logcat_monitor();
 
 extern std::atomic<bool> denylist_enforced;
-extern std::atomic<bool> do_monitor;
+extern std::atomic<bool> logcat_monitor;

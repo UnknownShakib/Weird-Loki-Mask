@@ -274,5 +274,8 @@
     <string name="settings_sulist_enforced">SuList is enforced</string>
     <string name="new_zygisk_loader">New Zygisk loader</string>
     <string name="settings_new_zygisk_loader_summary">Use new way to load Zygisk. This feature is experimental and it can break some hooking module.</string>
+    <string name="settings_logcat_monitor_title">Monitor logcat</string>
+    <string name="settings_logcat_monitor_summary">Monitor logcat instead of ptrace to detect the creation of app process. It\'s less detectable than ptrace but unrealiable.</string>
+    <string name="settings_logcat_monitor_no_need">No need when Zygisk is enabled</string>
 
 </resources>

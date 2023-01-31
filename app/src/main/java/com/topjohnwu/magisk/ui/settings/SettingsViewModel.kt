@@ -70,7 +70,7 @@ class SettingsViewModel : BaseViewModel(), BaseSettingsItem.Handler {
                 if (Const.Version.atLeast_24_0()) {
                     list.add(Zygisk)
                     if (is_delta){
-                        list.addAll(listOf(NewZygisk, AntiBLoop, CoreOnly, MagiskHideClass, DenyList, SuList, DenyListConfig, CleanHideList))
+                        list.addAll(listOf(NewZygisk, AntiBLoop, CoreOnly, MagiskHideClass, DenyList, LogcatMonitor, SuList, DenyListConfig, CleanHideList))
                     }
                 }
             }
