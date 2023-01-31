@@ -47,6 +47,7 @@ object Config : PreferenceConfig, DBConfig {
         const val SULIST = "sulist"
         const val ANTIBOOTLOOP = "anti_bootloop"
         const val NEW_ZYGISK_LOADER = "new_zygisk"
+        const val LOGCAT_MONITOR = "logcat_monitor"
 
         // prefs
         const val SU_REQUEST_TIMEOUT = "su_request_timeout"
@@ -172,6 +173,7 @@ object Config : PreferenceConfig, DBConfig {
     var suManager by dbStrings(Key.SU_MANAGER, "", true)
     var keyStoreRaw by dbStrings(Key.KEYSTORE, "", true)
 	var newzygisk by dbSettings(Key.NEW_ZYGISK_LOADER, false);
+	var logcatMonitor by dbSettings(Key.LOGCAT_MONITOR, false);
 
     private const val SU_FINGERPRINT = "su_fingerprint"
 

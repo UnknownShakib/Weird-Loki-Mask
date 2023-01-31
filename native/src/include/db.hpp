@@ -42,7 +42,8 @@ constexpr const char *DB_SETTING_KEYS[] = {
     "zygisk",
     "sulist",
     "anti_bootloop",
-    "new_zygisk"
+    "new_zygisk",
+    "logcat_monitor"
 };
 
 // Settings key indices
@@ -54,7 +55,8 @@ enum {
     ZYGISK_CONFIG,
     WHITELIST_CONFIG,
     ANTI_BOOTLOOP,
-    NEW_ZYGISK_CONFIG
+    NEW_ZYGISK_CONFIG,
+    LOGCAT_CONFIG
 };
 
 // Values for root_access

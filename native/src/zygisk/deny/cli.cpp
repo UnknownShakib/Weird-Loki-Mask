@@ -32,6 +32,8 @@ Magisk Delta specific Actions:
                    Unmount all Magisk modifications
                    directly [in another namespace...]
    --check PID     Manually trigger MagiskHide/SuList
+   logcat [enable|disable]
+                   Enable or disable logcat
 )EOF");
     exit(1);
 }
@@ -61,12 +63,11 @@ void denylist_handler(int client, const sock_cred *cred) {
     case DenyRequest::LIST:
         ls_list(client);
         return;
-    case DenyRequest::START_MONITOR:
-        enable_monitor();
-        res = DenyResponse::OK;
+    case DenyRequest::START_LOGCAT_MONITOR:
+        res = enable_logcat_monitor();
         break;
-    case DenyRequest::STOP_MONITOR:
-        disable_monitor();
+    case DenyRequest::STOP_LOGCAT_MONITOR:
+        disable_logcat_monitor();
         res = DenyResponse::OK;
         break;
     case DenyRequest::CHECK_PID:
@@ -115,6 +116,12 @@ int denylist_cli(int argc, char **argv) {
     else if (argv[1] == "version"sv) {
         printf("MAGISKHIDE:%d\n", hide_version);
         return 0;
+    } else if (argv[1] == "logcat"sv && argc == 3) {
+        if (argv[2] == "enable"sv)
+            req = DenyRequest::START_LOGCAT_MONITOR;
+        else if (argv[2] == "disable"sv)
+            req = DenyRequest::STOP_LOGCAT_MONITOR;
+        else usage();
     } else if (argc > 2 && argv[1] == "--check"sv)
         req = DenyRequest::CHECK_PID;
     else if (argv[1] == "--do-unmount"sv) {
@@ -186,6 +193,9 @@ int denylist_cli(int argc, char **argv) {
         return -1;
     case DenyResponse::SULIST_NO_DISABLE:
         fprintf(stderr, "MagiskHide cannot be disabled because SuList is enforced\n");
+        return -1;
+    case DenyResponse::LOGCAT_DISABLED:
+        fprintf(stderr, "Logcat daemon is not running\n");
         return -1;
     case DenyResponse::OK:
         break;

@@ -237,6 +237,9 @@ object Zygisk : BaseSettingsItem.Toggle() {
             DenyList.notifyPropertyChanged(BR.title)
             DenyList.notifyPropertyChanged(BR.description)
             DenyListConfig.refresh()
+            LogcatMonitor.notifyPropertyChanged(BR.title)
+            LogcatMonitor.notifyPropertyChanged(BR.description)
+            LogcatMonitor.refresh()
             NewZygisk.refresh()
         }
     val mismatch get() = value != Info.isZygiskEnabled
@@ -370,6 +373,30 @@ object DenyListConfig : BaseSettingsItem.Blank() {
     
     override fun refresh() {
         isEnabled = true
+    }
+}
+
+object LogcatMonitor : BaseSettingsItem.Toggle() {
+    override val title = R.string.settings_logcat_monitor_title.asText()
+    override val description get() =
+        if (Config.zygisk) R.string.settings_logcat_monitor_no_need.asText()
+        else R.string.settings_logcat_monitor_summary.asText()
+
+    override var value = Config.logcatMonitor
+        set(value) {
+            field = value
+            val cmd = if (value) "enable" else "disable"
+            Shell.cmd("magisk --hide logcat $cmd").submit { result ->
+                if (result.isSuccess) {
+                    Config.logcatMonitor = value
+                } else {
+                    field = !value
+                    notifyPropertyChanged(BR.checked)
+                }
+            }
+        }
+    override fun refresh() {
+        isEnabled = !Config.zygisk
     }
 }
 
