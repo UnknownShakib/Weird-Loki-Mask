@@ -24,6 +24,10 @@ private interface RikkaImpl : Dev {
     override val name get() = "RikkaW"
 }
 
+private interface HuskyImpl : Dev {
+    override val name get() = "HuskyDG"
+}
+
 sealed class DeveloperItem : Dev {
 
     abstract val items: List<IconLink>
@@ -61,6 +65,13 @@ sealed class DeveloperItem : Dev {
                 object : IconLink.Github.User(), RikkaImpl {}
             )
     }
+
+    object Husky : DeveloperItem(), HuskyImpl {
+        override val items =
+            listOf<IconLink>(
+                object : IconLink.Github.User(), HuskyImpl {}
+            )
+    }
 }
 
 sealed class IconLink : RvItem() {
@@ -77,7 +88,7 @@ sealed class IconLink : RvItem() {
         override val link get() = "https://paypal.me/$name"
 
         object Project : PayPal() {
-            override val name: String get() = "magiskdonate"
+            override val name: String get() = "huskydg"
         }
     }
 
