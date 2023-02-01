@@ -199,6 +199,10 @@ void sepolicy::magisk_rules() {
     allow("zygote", "init", "dir", ALL);
     allow("zygote", "init", "lnk_file", ALL);
     allow("zygote", ALL, "filesystem", "mount");
+    // Allow zygote to become god
+    // We should use random domain name instead of this
+    allow("zygote", "zygote", "process", "setcurrent");
+    allow("zygote", SEPOL_PROC_DOMAIN, "process", "dyntransition");
 
     // Shut llkd up
     dontaudit("llkd", SEPOL_PROC_DOMAIN, "process", "ptrace");

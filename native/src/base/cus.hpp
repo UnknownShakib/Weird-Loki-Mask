@@ -13,4 +13,5 @@ static inline long xptrace(int request, pid_t pid, void *addr, uintptr_t data) {
     return xptrace(request, pid, addr, reinterpret_cast<void *>(data));
 }
 #define WEVENT(s) (((s) & 0xffff0000) >> 16)
-
+int setcurrent(const char *con);
+std::string getcurrent();

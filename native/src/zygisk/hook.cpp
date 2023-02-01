@@ -16,6 +16,7 @@
 #include <flags.h>
 #include <daemon.hpp>
 #include <magisk.hpp>
+#include <selinux.hpp>
 
 #include "zygisk.hpp"
 #include "memory.hpp"
@@ -201,9 +202,14 @@ DCL_HOOK_FUNC(int, unshare, int flags) {
             flags &= ~CLONE_NEWNS;
             res = old_unshare(flags);
             int clone_pid;
+            auto zygote_con = getcurrent();
+            int current_pid = getpid();
+            // switch to permissive context
+            if (setcurrent("u:r:" SEPOL_PROC_DOMAIN ":s0") == -1)
+                ZLOGE("unable to switch selinux context");
             int pipe_fd[2];
             if (pipe(pipe_fd) < 0) {
-                LOGE("cannot create pipe\n");
+                ZLOGE("cannot create pipe\n");
                 goto final_way;
             }
             clone_pid = fork();
@@ -211,7 +217,7 @@ DCL_HOOK_FUNC(int, unshare, int flags) {
                 int i=0;
                 read(pipe_fd[0], &i, sizeof(i));
                 if (switch_mnt_ns(clone_pid) == 0) {
-                    ZLOGD("switched to root mount namespace\n");
+                    ZLOGD("switched to root mount namespace PID=[%d]\n", clone_pid);
                 }
                 kill(clone_pid, SIGKILL);
                 waitpid(clone_pid, 0, 0);
@@ -222,7 +228,7 @@ DCL_HOOK_FUNC(int, unshare, int flags) {
                 prctl(PR_SET_PDEATHSIG, SIGKILL);
                 if (switch_mnt_ns(1) == 0) {
                     old_unshare(CLONE_NEWNS);
-                    ZLOGD("created root mount namespace\n");
+                    ZLOGD("created root mount namespace for PID=[%d]\n", current_pid);
                     xmount("", "/", nullptr, MS_SLAVE | MS_REC, nullptr);
                     xmount("", "/", nullptr, MS_PRIVATE | MS_REC, nullptr);
                 } else {
@@ -233,6 +239,9 @@ DCL_HOOK_FUNC(int, unshare, int flags) {
             } else {
                 ZLOGE("unable to switch to root mount namespace\n");
             }
+            // restore old context, this should not always be failed
+            if (setcurrent(zygote_con.data()) == -1)
+                ZLOGE("unable to restore selinux context");
             goto final_way;
         }
         res = old_unshare(flags);
