@@ -23,6 +23,8 @@ enum : int {
     STOP_LOGCAT_MONITOR,
     CHECK_PID,
     SULIST_STATUS,
+    ENFORCE_SULIST,
+    DISABLE_SULIST,
 
     END
 };
@@ -53,6 +55,7 @@ int disable_deny();
 int add_list(int client);
 int rm_list(int client);
 void ls_list(int client);
+void update_sulist_config(bool enable);
 
 // Utility functions
 bool is_deny_target(int uid, std::string_view process, int max_len = 1024);

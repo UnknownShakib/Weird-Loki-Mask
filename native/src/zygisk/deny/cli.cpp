@@ -8,7 +8,7 @@
 
 #include "deny.hpp"
 
-#define hide_version 2
+#define hide_version 3
 
 using namespace std;
 
@@ -18,7 +18,6 @@ R"EOF(MagiskHide Config CLI
 Usage: magiskhide [action [arguments...] ]
 Actions:
    status          Return the MagiskHide status
-   sulist          Return the SuList status
    enable          Enable MagiskHide
    disable         Disable MagiskHide
    add PKG [PROC]  Add a new target to the hidelist (sulist)
@@ -27,6 +26,9 @@ Actions:
    exec CMDs...    Execute commands in isolated mount
                    namespace and do all unmounts
 Magisk Delta specific Actions:
+   sulist          Return the SuList status
+   sulist [enable|disable]
+                   Enable or disable SuList (need reboot)
    version         Print MagiskHide version
    --do-unmount [PID...]
                    Unmount all Magisk modifications
@@ -53,6 +55,14 @@ void denylist_handler(int client, const sock_cred *cred) {
         break;
     case DenyRequest::DISABLE:
         res = disable_deny();
+        break;
+    case DenyRequest::ENFORCE_SULIST:
+        update_sulist_config(true);
+        res = DenyResponse::OK;
+        break;
+    case DenyRequest::DISABLE_SULIST:
+        update_sulist_config(false);
+        res = DenyResponse::OK;
         break;
     case DenyRequest::ADD:
         res = add_list(client);
@@ -111,9 +121,14 @@ int denylist_cli(int argc, char **argv) {
         req = DenyRequest::LIST;
     else if (argv[1] == "status"sv)
         req = DenyRequest::STATUS;
-    else if (argv[1] == "sulist"sv)
-        req = DenyRequest::SULIST_STATUS;
-    else if (argv[1] == "version"sv) {
+    else if (argv[1] == "sulist"sv && argc >= 2) {
+    	if (argc >= 3) {
+            if (argv[2] == "enable"sv)
+                req = DenyRequest::ENFORCE_SULIST;
+            else if (argv[2] == "disable"sv)
+                req = DenyRequest::DISABLE_SULIST;
+        } else req = DenyRequest::SULIST_STATUS;
+    } else if (argv[1] == "version"sv) {
         printf("MAGISKHIDE:%d\n", hide_version);
         return 0;
     } else if (argv[1] == "logcat"sv && argc == 3) {

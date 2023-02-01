@@ -379,6 +379,14 @@ static void update_logcat_config() {
     db_err(err);
 }
 
+void update_sulist_config(bool enable) {
+    char sql[64];
+    sprintf(sql, "REPLACE INTO settings (key,value) VALUES('%s',%d)",
+        DB_SETTING_KEYS[WHITELIST_CONFIG], enable? 1 : 0);
+    char *err = db_exec(sql);
+    db_err(err);
+}
+
 static int new_daemon_thread(void(*entry)()) {
     thread_entry proxy = [](void *entry) -> void * {
         reinterpret_cast<void(*)()>(entry)();
